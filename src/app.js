@@ -1,19 +1,22 @@
+require("module-alias").addAliases({
+  "@": __dirname,
+});
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
-const config = require("./config/app.config");
+const config = require("@/config/app.config");
 
-const db = require("./config/database");
-const User = require("./models/user.model");
-const Todo = require("./models/todo.model");
-const RevokedToken = require("./models/revokedToken.model");
-const authRoutes = require("./routes/auth.route");
-const todoRoutes = require("./routes/todo.route");
-const response = require("./middlewares/response");
-const errorHandler = require("./middlewares/errorHandler");
-const notFound = require("./middlewares/notFound");
-const { apiRateLimiter } = require("./middlewares/rateLimiter");
+const db = require("@/config/database");
+const User = require("@/models/user.model");
+const Todo = require("@/models/todo.model");
+const RevokedToken = require("@/models/revokedToken.model");
+const authRoutes = require("@/routes/auth.route");
+const todoRoutes = require("@/routes/todo.route");
+const response = require("@/middlewares/response");
+const errorHandler = require("@/middlewares/errorHandler");
+const notFound = require("@/middlewares/notFound");
+const { apiRateLimiter } = require("@/middlewares/rateLimiter");
 
 const app = express();
 

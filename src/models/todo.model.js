@@ -1,4 +1,4 @@
-const db = require("../config/database");
+const db = require("@/config/database");
 
 /**
  * Todo Model - Thao tác với bảng todos
@@ -74,22 +74,32 @@ const Todo = {
   /**
    * Tạo todo mới
    */
-  create: async ({ title, description, userId, dueDate, priority }) => {
+  create: async ({
+    title,
+    description,
+    completed,
+    userId,
+    dueDate,
+    priority,
+  }) => {
     const sql = `
-      INSERT INTO todos (title, description, user_id, due_date, priority)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO todos (title, description, completed, user_id, due_date, priority)
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
     const [result] = await db.execute(sql, [
       title,
       description || null,
+      completed || false,
       userId,
       dueDate || null,
       priority || "medium",
     ]);
+
     return {
       id: result.insertId,
       title,
       description,
+      completed,
       userId,
       dueDate,
       priority,
@@ -99,20 +109,20 @@ const Todo = {
   /**
    * Cập nhật todo
    */
-  update: async (id, { title, description, completed, dueDate, priority }) => {
+  update: async (id, { title, description, completed, priority }) => {
     const sql = `
       UPDATE todos
-      SET title = ?, description = ?, completed = ?, due_date = ?, priority = ?
+      SET title = ?, description = ?, completed = ?, priority = ?
       WHERE id = ?
     `;
     const [result] = await db.execute(sql, [
       title,
       description,
       completed,
-      dueDate,
       priority,
       id,
     ]);
+    // affectedRows > 0 nghĩa là có dòng nào đó đã được cập nhật
     return result.affectedRows > 0;
   },
 

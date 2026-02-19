@@ -1,4 +1,4 @@
-const authService = require("../services/auth.service");
+const authService = require("@/services/auth.service");
 
 class AuthController {
   /**
@@ -68,39 +68,6 @@ class AuthController {
   }
 
   /**
-   * Làm mới access token bằng refresh token
-   * @route POST /api/auth/refresh
-   */
-  async refreshToken(req, res) {
-    try {
-      // Lấy refresh token từ request body
-      const { refresh_token } = req.body;
-
-      // Kiểm tra refresh token có tồn tại không
-      if (!refresh_token) {
-        return res.status(400).json({
-          error: "Refresh token is required",
-        });
-      }
-
-      // Gọi service để tạo access token mới
-      const tokens = await authService.refreshToken(refresh_token);
-
-      // Trả về token mới
-      res.status(200).json({
-        message: "Token refreshed successfully",
-        ...tokens,
-      });
-    } catch (error) {
-      // Trả về lỗi 401 nếu refresh token không hợp lệ
-      console.error("Refresh token error:", error);
-      res.status(401).json({
-        error: error.message,
-      });
-    }
-  }
-
-  /**
    * Đăng xuất user
    * @route POST /api/auth/logout
    */
@@ -129,6 +96,39 @@ class AuthController {
     } catch (error) {
       console.error("Logout error:", error);
       res.status(400).json({
+        error: error.message,
+      });
+    }
+  }
+
+  /**
+   * Làm mới access token bằng refresh token
+   * @route POST /api/auth/refresh
+   */
+  async refreshToken(req, res) {
+    try {
+      // Lấy refresh token từ request body
+      const { refresh_token } = req.body;
+
+      // Kiểm tra refresh token có tồn tại không
+      if (!refresh_token) {
+        return res.status(400).json({
+          error: "Refresh token is required",
+        });
+      }
+
+      // Gọi service để tạo access token mới
+      const tokens = await authService.refreshToken(refresh_token);
+
+      // Trả về token mới
+      res.status(200).json({
+        message: "Token refreshed successfully",
+        ...tokens,
+      });
+    } catch (error) {
+      // Trả về lỗi 401 nếu refresh token không hợp lệ
+      console.error("Refresh token error:", error);
+      res.status(401).json({
         error: error.message,
       });
     }

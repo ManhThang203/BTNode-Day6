@@ -1,6 +1,6 @@
 const express = require("express");
-const todoController = require("../controllers/todo.controller");
-const authRequired = require("../middlewares/authRequired");
+const todoController = require("@/controllers/todo.controller");
+const authRequired = require("@/middlewares/authRequired");
 
 // Tạo router instance
 const router = express.Router();

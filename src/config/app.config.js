@@ -9,9 +9,9 @@ const config = {
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET,
     refreshSecret: process.env.JWT_REFRESH_SECRET,
-    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "15m",
+    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "1h",
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
-    algorithm: process.env.JWT_ALGORITHM || "HS512",
+    algorithm: process.env.JWT_ALGORITHM || "HS256",
   },
 
   // Rate Limiter configuration

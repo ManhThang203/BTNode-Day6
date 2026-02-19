@@ -54,7 +54,7 @@ const createRateLimiter = (config) => {
 
 // Tạo sẵn một instance rate limiter cho API
 const apiRateLimiter = createRateLimiter(
-  require("../config/app.config").rateLimiter,
+  require("@/config/app.config").rateLimiter,
 );
 
 // Xuất để sử dụng ở file khác

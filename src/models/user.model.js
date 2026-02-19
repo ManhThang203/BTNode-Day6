@@ -1,4 +1,4 @@
-const db = require("../config/database");
+const db = require("@/config/database");
 const bcrypt = require("bcryptjs");
 
 /**
@@ -13,7 +13,7 @@ const User = {
   createTable: async () => {
     const sql = `
       CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(30) NOT NULL UNIQUE,
         email VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
@@ -29,6 +29,7 @@ const User = {
    */
   findById: async (id) => {
     const sql = `SELECT id, username, email, created_at, updated_at FROM users WHERE id = ?`;
+    // chuyền id vào câu truy vấn để tránh SQL Injection
     const [rows] = await db.execute(sql, [id]);
     return rows[0] || null;
   },
@@ -57,6 +58,7 @@ const User = {
   create: async ({ username, email, password }) => {
     // Mã hóa password
     const salt = await bcrypt.genSalt(10);
+    // Hash password với salt để tăng cường bảo mật
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const sql = `
@@ -77,6 +79,7 @@ const User = {
       WHERE id = ?
     `;
     const [result] = await db.execute(sql, [username, email, id]);
+    // affectedRows là số dòng bị thay đổi sau khi UPDATE
     return result.affectedRows > 0;
   },
 
@@ -86,6 +89,7 @@ const User = {
   delete: async (id) => {
     const sql = `DELETE FROM users WHERE id = ?`;
     const [result] = await db.execute(sql, [id]);
+    // affectedRows là số dòng bị thay đổi sau khi DELETE
     return result.affectedRows > 0;
   },
 

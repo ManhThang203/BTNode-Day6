@@ -1,6 +1,6 @@
 const express = require("express");
-const authController = require("../controllers/auth.controller");
-const authRequired = require("../middlewares/authRequired");
+const authController = require("@/controllers/auth.controller");
+const authRequired = require("@/middlewares/authRequired");
 
 // Tạo router instance
 const router = express.Router();

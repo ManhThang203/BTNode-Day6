@@ -1,7 +1,7 @@
 const mysql = require("mysql2/promise");
 
 // Lấy cấu hình từ app.config
-const config = require("./app.config");
+const config = require("@/config/app.config");
 
 // Cấu hình thông tin database từ environment variables
 const databaseConfig = {

@@ -1,4 +1,4 @@
-const Todo = require("../models/todo.model");
+const Todo = require("@/models/todo.model");
 
 class TodoService {
   /**
@@ -22,6 +22,7 @@ class TodoService {
 
     // Lọc theo trạng thái nếu có
     if (completed !== undefined) {
+      // completed
       const isCompleted = completed === "true" || completed === true;
       todos = await Todo.findByUserIdAndStatus(userId, isCompleted);
     } else {
@@ -81,7 +82,6 @@ class TodoService {
       title: updateData.title,
       description: updateData.description,
       completed: updateData.completed,
-      dueDate: updateData.dueDate,
       priority: updateData.priority,
     });
 
@@ -100,7 +100,7 @@ class TodoService {
     const existingTodo = await this.getById(todoId, userId);
 
     if (!existingTodo) {
-      return false;
+      return null;
     }
 
     return await Todo.delete(parseInt(todoId));

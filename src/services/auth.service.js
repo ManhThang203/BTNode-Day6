@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const config = require("../config/app.config");
+const config = require("@/config/app.config");
 
 const jwtConfig = {
   accessSecret: config.jwt.accessSecret,
@@ -10,8 +10,8 @@ const jwtConfig = {
   algorithm: config.jwt.algorithm,
 };
 
-const User = require("../models/user.model");
-const RevokedToken = require("../models/revokedToken.model");
+const User = require("@/models/user.model");
+const RevokedToken = require("@/models/revokedToken.model");
 
 class AuthService {
   /**
@@ -25,8 +25,8 @@ class AuthService {
     };
 
     return jwt.sign(payload, jwtConfig.accessSecret, {
-      expiresIn: jwtConfig.accessExpiresIn,
-      algorithm: jwtConfig.algorithm,
+      expiresIn: jwtConfig.accessExpiresIn, // token hết hạn
+      algorithm: jwtConfig.algorithm, // thuật toan mã hóa
     });
   }
 
@@ -40,8 +40,8 @@ class AuthService {
     };
 
     return jwt.sign(payload, jwtConfig.refreshSecret, {
-      expiresIn: jwtConfig.refreshExpiresIn,
-      algorithm: jwtConfig.algorithm,
+      expiresIn: jwtConfig.refreshExpiresIn, // token hết hạn
+      algorithm: jwtConfig.algorithm, // thuật toan mã hóa
     });
   }
 
@@ -66,7 +66,7 @@ class AuthService {
   verifyAccessToken(token) {
     try {
       return jwt.verify(token, jwtConfig.accessSecret, {
-        algorithms: [jwtConfig.algorithm],
+        algorithms: jwtConfig.algorithm,
       });
     } catch (error) {
       return null;
@@ -79,7 +79,7 @@ class AuthService {
   verifyRefreshToken(token) {
     try {
       return jwt.verify(token, jwtConfig.refreshSecret, {
-        algorithms: [jwtConfig.algorithm],
+        algorithms: jwtConfig.algorithm,
       });
     } catch (error) {
       return null;
@@ -134,6 +134,7 @@ class AuthService {
 
     // Tìm user theo email
     const user = await User.findByEmail(email);
+    console.log("User found for login:", user); // Log user để kiểm tra
 
     if (!user) {
       throw new Error("Invalid email or password");
@@ -170,7 +171,7 @@ class AuthService {
       throw new Error("Invalid or expired refresh token");
     }
 
-    // Kiểm tra token có bị thu hồi không
+    // kiểm tra token có bị thu hồi không trước khi tạo token mới để đảm bảo an toàn
     const isRevoked = await RevokedToken.isRevoked(refreshToken);
 
     if (isRevoked) {
