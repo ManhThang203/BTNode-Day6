@@ -30,7 +30,7 @@ const RevokedToken = {
   isRevoked: async (token) => {
     const sql = `SELECT id FROM revoked_tokens WHERE token = ?`;
     const [rows] = await db.execute(sql, [token]);
-    return rows.length > 0;
+    return rows.length > 0; // rows.length > 0 nghĩa là token đã bị thu hồi
   },
 
   /**

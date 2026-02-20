@@ -66,7 +66,7 @@ class AuthService {
   verifyAccessToken(token) {
     try {
       return jwt.verify(token, jwtConfig.accessSecret, {
-        algorithms: jwtConfig.algorithm,
+        algorithms: jwtConfig.algorithm, // đảm bảo chỉ chấp nhận token được mã hóa bằng thuật toán đã định nghĩa
       });
     } catch (error) {
       return null;
@@ -75,11 +75,12 @@ class AuthService {
 
   /**
    * Xác thực refresh token
+   * có liên quan với hàm generateRefreshToken
    */
   verifyRefreshToken(token) {
     try {
       return jwt.verify(token, jwtConfig.refreshSecret, {
-        algorithms: jwtConfig.algorithm,
+        algorithms: jwtConfig.algorithm, // đảm bảo chỉ chấp nhận token được mã hóa bằng thuật toán đã định nghĩa
       });
     } catch (error) {
       return null;
@@ -114,6 +115,8 @@ class AuthService {
     });
 
     // Tạo tokens
+    // user: { id, username, email } sẽ được dùng làm payload để tạo token,
+    // giúp token mang thông tin người dùng cần thiết mà không cần truy vấn database nhiều lần
     const tokens = this.generateTokens(user);
 
     return {
@@ -134,7 +137,6 @@ class AuthService {
 
     // Tìm user theo email
     const user = await User.findByEmail(email);
-    console.log("User found for login:", user); // Log user để kiểm tra
 
     if (!user) {
       throw new Error("Invalid email or password");
@@ -210,21 +212,18 @@ class AuthService {
   }
 
   /**
-   * Kiểm tra token có bị thu hồi không
-   */
-  async isTokenRevoked(token) {
-    return await RevokedToken.isRevoked(token);
-  }
-
-  /**
    * Thu hồi token
    */
   async revokeToken(token) {
+    // jwt.decode để đọc nội dung bên trong token mà không cần verify.
+    // Kết quả trả về dạng: { sub: userId, iat: timestamp, exp: timestamp }
     const decoded = jwt.decode(token);
-
+    // Nếu token có thông tin và  exp (thời gian hết hạn),
     if (decoded && decoded.exp) {
+      // Chuyển đổi thời gian hết hạn
       const expiresAt = new Date(decoded.exp * 1000);
 
+      // Lưu token vào danh sách thu hồi với thời gian hết hạn để tự động xóa sau này
       await RevokedToken.revoke({
         token,
         expiresAt,

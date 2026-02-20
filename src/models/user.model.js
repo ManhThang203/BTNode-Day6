@@ -58,6 +58,7 @@ const User = {
   create: async ({ username, email, password }) => {
     // Mã hóa password
     const salt = await bcrypt.genSalt(10);
+
     // Hash password với salt để tăng cường bảo mật
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -66,6 +67,7 @@ const User = {
       VALUES (?, ?, ?)
     `;
     const [result] = await db.execute(sql, [username, email, hashedPassword]);
+    // result.insertId là ID của user mới được tạo ra
     return { id: result.insertId, username, email };
   },
 

@@ -32,7 +32,9 @@ const pool = mysql.createPool({
 const execute = async (sql, params = []) => {
   try {
     // Thực thi query và trả về kết quả dưới dạng mảng [results]
+    // pool.execute sẽ tự động sử dụng prepared statements để tránh SQL injection
     const [results] = await pool.execute(sql, params);
+    // [results] có thể là một mảng kết quả hoặc một object tùy vào loại query (SELECT trả về mảng, INSERT/UPDATE trả về object)
     return [results];
   } catch (error) {
     // Log lỗi và throw để xử lý ở tầng cao hơn

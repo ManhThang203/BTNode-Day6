@@ -42,11 +42,6 @@ const logErrorToFile = (error, req) => {
  * Global Error Handler Middleware
  * Middleware này phải được define sau tất cả routes
  * Express sẽ tự động gọi middleware này khi có lỗi xảy ra
- *
- * @param {Error} err - Error object được throw hoặc pass qua next(err)
- * @param {Request} req - Express request object
- * @param {Response} res - Express response object
- * @param {Function} next - Express next function
  */
 const errorHandler = (err, req, res, next) => {
   // Log lỗi ra console để dev có thể thấy ngay
