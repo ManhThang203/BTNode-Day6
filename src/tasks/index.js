@@ -1,26 +1,26 @@
+const console = require("console");
 const fs = require("fs");
+const path = require("path");
 
-const basePath = "./src/tasks"; // Thư mục chứa các file task
-const postfix = "Task.js"; // Hậu tố để lọc đúng file task
-
-// Đọc tất cả file trong thư mục, chỉ lấy file có đuôi "Task.js"
+const basePath = "./src/tasks";
+// Điều chỉnh postfix để khớp chính xác với đuôi file trong ảnh (.task.js)
+const postfix = ".task.js";
 
 const entries = fs
-  // readdirSync: đọc tất cả tên file trong thư mục
-  // readdir trả về mảng tên file, ví dụ: ["createTask.js", "deleteTask.js", "index.js"]
   .readdirSync(basePath)
   .filter((fileName) => fileName.endsWith(postfix));
 
-// Chuyển mảng file thành object dạng { tênTask: module }
 const tasksMap = entries.reduce((obj, fileName) => {
+  // 1. Cắt bỏ đuôi ".task.js" để lấy tên task sạch
+  const taskName = fileName.replace(postfix, "");
+
   return {
-    ...obj, // Giữ lại các key cũ
-
-    // Key: bỏ phần "Task.js" → "createTask.js" thành "create"
-    // Value: import module từ file đó
-    [fileName.replace(postfix, "")]: require(`./${fileName}`),
+    ...obj,
+    // 2. Sử dụng path.join hoặc template string chuẩn để require
+    // Lưu ý: require cần đường dẫn tương đối từ file index này đến file task
+    [taskName]: require(path.join(__dirname, fileName)),
   };
-}, {}); // Bắt đầu từ object rỗng {}
+}, {});
+console.log("tasksMap: ", tasksMap);
 
-// Xuất ra để các file khác có thể dùng
 module.exports = tasksMap;

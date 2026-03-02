@@ -20,7 +20,7 @@ const constants = require("@/config/constants");
 
       const payload = JSON.parse(pendingJobs.payload);
       switch (type) {
-        case "sendVerifyEmail":
+        case "sendVerificationEmail":
           try {
             console.log(`Job: "${type}" is processing...`);
             await queueModel.updateStatus(

@@ -25,7 +25,7 @@ class AuthController {
 
       // Đẩy job gửi email xác thực vào queue
       queueService.push({
-        type: "sendVerifyEmail",
+        type: "sendVerificationEmail",
         payload: {
           user: result.user,
           verifyToken: result.verifyToken,
@@ -237,7 +237,7 @@ class AuthController {
 
       // Đẩy job gửi email xác thực vào queue
       queueService.push({
-        type: "sendVerifyEmail",
+        type: "sendVerificationEmail",
         payload: {
           user: { id: user.id, email: user.email },
           verifyToken,
