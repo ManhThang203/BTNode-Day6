@@ -1,6 +1,6 @@
 # Todo App Backend
 
-A production-ready REST API for Todo Application built with Node.js, Express, and MySQL. This backend provides complete user authentication and todo management features with JWT tokens, rate limiting, and comprehensive error handling.
+A production-ready REST API for Todo Application built with Node.js, Express, and MySQL. This backend provides complete user authentication and todo management features with JWT tokens, rate limiting, background job queue for emails, and comprehensive error handling.
 
 ## Table of Contents
 
@@ -54,6 +54,13 @@ A production-ready REST API for Todo Application built with Node.js, Express, an
 - **SQL Injection Prevention** - Prepared statements for all queries
 - **Error Logging** - Comprehensive error logging to file
 
+### Background Job Queue
+
+- **Email Queue System** - Asynchronous processing for email tasks
+- **Job Status Tracking** - Pending, processing, completed, and failed states
+- **Automatic Retry** - Failed jobs can be reprocessed
+- **Email Notifications** - Verification emails and password change notifications
+
 ### API Design
 
 - **RESTful API** - Standard HTTP methods and status codes
@@ -74,6 +81,8 @@ A production-ready REST API for Todo Application built with Node.js, Express, an
 | bcryptjs       | Password hashing      | ^2.4.3  |
 | dotenv         | Environment variables | ^16.3.1 |
 | cors           | CORS middleware       | ^2.8.5  |
+| nodemailer     | Email sending         | ^6.9.8  |
+| module-alias   | Path aliases          | ^2.2.3  |
 | nodemon        | Development tool      | ^3.0.2  |
 
 ## Project Structure
@@ -81,9 +90,12 @@ A production-ready REST API for Todo Application built with Node.js, Express, an
 ```
 src/
 ├── app.js                      # Application entry point
+├── queue.js                    # Background job queue processor
 ├── config/
 │   ├── app.config.js          # Application configuration
-│   └── database.js            # Database connection pool
+│   ├── constants.js           # Application constants
+│   ├── database.js            # Database connection pool
+│   └── nodemailer.js          # Email transporter configuration
 ├── controllers/
 │   ├── auth.controller.js     # Authentication controllers
 │   └── todo.controller.js     # Todo CRUD controllers
@@ -96,25 +108,38 @@ src/
 ├── models/
 │   ├── user.model.js           # User database operations
 │   ├── todo.model.js          # Todo database operations
-│   └── revokedToken.model.js  # Token blacklisting operations
+│   ├── revokedToken.model.js  # Token blacklisting operations
+│   └── queue.model.js         # Queue job operations
 ├── routes/
 │   ├── auth.route.js          # Authentication routes
 │   └── todo.route.js          # Todo management routes
-└── services/
-    ├── auth.service.js        # Authentication business logic
-    └── todo.service.js        # Todo business logic
+├── services/
+│   ├── auth.service.js        # Authentication business logic
+│   ├── todo.service.js        # Todo business logic
+│   ├── email.service.js       # Email sending service
+│   └── queue.service.js       # Queue management service
+├── tasks/
+│   ├── index.js               # Task loader
+│   ├── demoTask.js            # Demo task
+│   ├── sendVerifyEmailTask.js # Email verification task
+│   └── sendPasswordChangeEmailTask.js # Password change task
+└── utils/
+    └── sleep.js               # Sleep utility
 ```
 
 ## API Endpoints
 
 ### Authentication
 
-| Method | Endpoint                  | Description          | Access  | Body Parameters                 |
-| ------ | ------------------------- | -------------------- | ------- | ------------------------------- |
-| POST   | `/api/auth/register`      | Register new user    | Public  | `username`, `email`, `password` |
-| POST   | `/api/auth/login`         | Login user           | Public  | `email`, `password`             |
-| POST   | `/api/auth/refresh-token` | Refresh access token | Public  | `refresh_token`                 |
-| POST   | `/api/auth/logout`        | Logout user          | Private | -                               |
+| Method | Endpoint                        | Description               | Access  | Body Parameters                                     |
+| ------ | ------------------------------- | ------------------------- | ------- | --------------------------------------------------- |
+| POST   | `/api/auth/register`            | Register new user         | Public  | `username`, `email`, `password`                     |
+| POST   | `/api/auth/login`               | Login user                | Public  | `email`, `password`                                 |
+| POST   | `/api/auth/verify-email`        | Verify user email         | Public  | `token`                                             |
+| POST   | `/api/auth/resend-verify-email` | Resend verification email | Private | -                                                   |
+| POST   | `/api/auth/refresh-token`       | Refresh access token      | Public  | `refresh_token`                                     |
+| POST   | `/api/auth/logout`              | Logout user               | Private | -                                                   |
+| POST   | `/api/auth/change-password`     | Change user password      | Private | `currentPassword`, `newPassword`, `confirmPassword` |
 
 ### Todo Management
 
@@ -199,6 +224,13 @@ PAGINATION_MAX_LIMIT=100
 
 # Frontend URL (for CORS)
 FRONTEND_URL=http://localhost:3001
+
+# Google Email Configuration
+GOOGLE_APP_USER=your_email@gmail.com
+GOOGLE_APP_PASSWORD=your_app_password
+
+# Queue Configuration
+QUEUE_POLL_INTERVAL=1000
 ```
 
 ### Database Setup
@@ -225,6 +257,21 @@ npm start
 
 The server will start on `http://localhost:3000` (or the port specified in your `.env` file).
 
+### Running the Queue Worker
+
+The queue worker processes background jobs like sending verification emails and password change notifications. Run it in a separate terminal:
+
+```bash
+npm run queue
+```
+
+The queue worker will:
+
+1. Poll the database every second for pending jobs
+2. Process jobs asynchronously
+3. Update job status (pending → processing → completed/failed)
+4. Retry failed jobs automatically on next poll
+
 ## Environment Variables
 
 | Variable                    | Description             | Default     | Required |
@@ -247,6 +294,9 @@ The server will start on `http://localhost:3000` (or the port specified in your 
 | `PAGINATION_DEFAULT_LIMIT`  | Default items per page  | 10          | No       |
 | `PAGINATION_MAX_LIMIT`      | Maximum items per page  | 100         | No       |
 | `FRONTEND_URL`              | Allowed CORS origin     | -           | No       |
+| `GOOGLE_APP_USER`           | Gmail email address     | -           | No       |
+| `GOOGLE_APP_PASSWORD`       | Gmail app password      | -           | No       |
+| `QUEUE_POLL_INTERVAL`       | Queue poll interval(ms) | 1000        | No       |
 
 ## Database Schema
 
@@ -293,6 +343,21 @@ CREATE TABLE IF NOT EXISTS revoked_tokens (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_expires_at (expires_at),
   INDEX idx_token (token)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### Queue Jobs Table
+
+```sql
+CREATE TABLE IF NOT EXISTS queue_jobs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  type VARCHAR(100) NOT NULL,
+  payload TEXT NOT NULL,
+  status ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_status (status),
+  INDEX idx_type (type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
@@ -591,6 +656,46 @@ Error logs include:
 2. **Auto Table Creation**: Tables are created automatically on server start
 3. **Foreign Key Constraints**: Ensures data integrity
 4. **Indexes**: Optimized for common queries
+
+### Queue System
+
+The background job queue uses a polling mechanism to process asynchronous tasks:
+
+1. **Job Types**:
+   - `sendVerifyEmail` - Sends email verification links to new users
+   - `sendPasswordChangeEmail` - Notifies users when password is changed
+
+2. **Job Status Flow**:
+   - `pending` → Job is waiting to be processed
+   - `processing` → Job is currently being handled
+   - `completed` → Job finished successfully
+   - `failed` → Job encountered an error (will be retried on next poll)
+
+3. **Processing Flow**:
+   - Queue worker polls database every second
+   - Fetches oldest pending job
+   - Executes corresponding task handler
+   - Updates job status based on result
+   - Continues to next job
+
+4. **Email Service**:
+   - Uses Nodemailer with Gmail SMTP
+   - Requires Google App Password for authentication
+   - Supports both text and HTML email content
+
+### Module Aliases
+
+The project uses `module-alias` for cleaner import paths:
+
+| Alias | Path   |
+| ----- | ------ |
+| `@/`  | `src/` |
+
+Example usage:
+
+```javascript
+const userModel = require("@/models/user.model"); // src/models/user.model
+```
 
 ## License
 
