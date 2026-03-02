@@ -3,11 +3,13 @@ const jwt = require("jsonwebtoken");
 const config = require("@/config/app.config");
 
 const jwtConfig = {
-  accessSecret: config.jwt.accessSecret,
-  refreshSecret: config.jwt.refreshSecret,
-  accessExpiresIn: config.jwt.accessExpiresIn,
-  refreshExpiresIn: config.jwt.refreshExpiresIn,
-  algorithm: config.jwt.algorithm,
+  accessSecret: config.JWT.accessSecret,
+  refreshSecret: config.JWT.refreshSecret,
+  verifyEmailSecret: config.JWT.verifyEmailSecret,
+  accessExpiresIn: config.JWT.accessExpiresIn,
+  verifyEmailExpiresIn: config.JWT.verifyEmailExpiresIn,
+  refreshExpiresIn: config.JWT.refreshExpiresIn,
+  algorithm: config.JWT.algorithm,
 };
 
 const User = require("@/models/user.model");
@@ -88,6 +90,35 @@ class AuthService {
   }
 
   /**
+   * Tạo verify token cho email
+   */
+  generateVerifyToken(user) {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      type: "verify",
+    };
+
+    return jwt.sign(payload, jwtConfig.verifyEmailSecret, {
+      expiresIn: jwtConfig.verifyEmailExpiresIn,
+      algorithm: jwtConfig.algorithm,
+    });
+  }
+
+  /**
+   * Xác thực verify token
+   */
+  verifyVerifyToken(token) {
+    try {
+      return jwt.verify(token, jwtConfig.verifyEmailSecret, {
+        algorithms: jwtConfig.algorithm,
+      });
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
    * Đăng ký user mới
    */
   async register(userData) {
@@ -100,7 +131,12 @@ class AuthService {
     ]);
 
     if (existingUserByEmail) {
-      throw new Error("User with this email already exists");
+      // Nếu user đã tồn tại nhưng chưa xác thực email, cho phép đăng ký lại
+      if (!existingUserByEmail.verified_at) {
+        await User.delete(existingUserByEmail.id);
+      } else {
+        throw new Error("User with this email already exists");
+      }
     }
 
     if (existingUserByUsername) {
@@ -119,12 +155,16 @@ class AuthService {
     // giúp token mang thông tin người dùng cần thiết mà không cần truy vấn database nhiều lần
     const tokens = this.generateTokens(user);
 
+    // Tạo verifyToken cho email
+    const verifyToken = this.generateVerifyToken(user);
+
     return {
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
       },
+      verifyToken,
       ...tokens,
     };
   }
@@ -137,6 +177,7 @@ class AuthService {
 
     // Tìm user theo email
     const user = await User.findByEmail(email);
+    console.log("User found for login:", user); // Log thông tin user tìm được
 
     if (!user) {
       throw new Error("Invalid email or password");
@@ -157,6 +198,7 @@ class AuthService {
         id: user.id,
         username: user.username,
         email: user.email,
+        verified_at: !!user.verified_at,
       },
       ...tokens,
     };

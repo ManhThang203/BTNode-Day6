@@ -20,8 +20,8 @@ const pool = mysql.createPool({
   password: databaseConfig.password,
   database: databaseConfig.name,
   waitForConnections: true, // Chờ nếu không có connection available
-  connectionLimit: config.database.connectionLimit, // Giới hạn tối đa connections đồng thời
-  queueLimit: config.database.queueLimit, // Không giới hạn số lượng request chờ
+  connectionLimit: config.DATABASE.connectionLimit, // Giới hạn tối đa connections đồng thời
+  queueLimit: config.DATABASE.queueLimit, // Không giới hạn số lượng request chờ
   enableKeepAlive: true, // Giữ kết nối alive
   keepAliveInitialDelay: 0, // Không delay khi keep alive
 });

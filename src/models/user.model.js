@@ -17,6 +17,7 @@ const User = {
         username VARCHAR(30) NOT NULL UNIQUE,
         email VARCHAR(255) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
+        verified_at TIMESTAMP NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -28,8 +29,17 @@ const User = {
    * Tìm user theo ID
    */
   findById: async (id) => {
-    const sql = `SELECT id, username, email, created_at, updated_at FROM users WHERE id = ?`;
+    const sql = `SELECT id, username, email, created_at, updated_at, verified_at FROM users WHERE id = ?`;
     // chuyền id vào câu truy vấn để tránh SQL Injection
+    const [rows] = await db.execute(sql, [id]);
+    return rows[0] || null;
+  },
+
+  /**
+   * Tìm user theo ID (bao gồm password)
+   */
+  findByIdWithPassword: async (id) => {
+    const sql = `SELECT * FROM users WHERE id = ?`;
     const [rows] = await db.execute(sql, [id]);
     return rows[0] || null;
   },
@@ -86,6 +96,19 @@ const User = {
   },
 
   /**
+   * Cập nhật verified_at khi xác thực email thành công
+   */
+  verifyEmail: async (id) => {
+    const sql = `
+      UPDATE users
+      SET verified_at = NOW()
+      WHERE id = ?
+    `;
+    const [result] = await db.execute(sql, [id]);
+    return result.affectedRows > 0;
+  },
+
+  /**
    * Xóa user
    */
   delete: async (id) => {
@@ -100,6 +123,31 @@ const User = {
    */
   comparePassword: async (candidatePassword, hashedPassword) => {
     return await bcrypt.compare(candidatePassword, hashedPassword);
+  },
+
+  /**
+   * Đổi mật khẩu
+   */
+  changePassword: async (id, newPassword) => {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    const sql = `
+      UPDATE users
+      SET password = ?, updated_at = NOW()
+      WHERE id = ?
+    `;
+    const [result] = await db.execute(sql, [hashedPassword, id]);
+
+    if (result.affectedRows > 0) {
+      // Return the timestamp when password was changed
+      const [rows] = await db.execute(
+        `SELECT updated_at FROM users WHERE id = ?`,
+        [id],
+      );
+      return rows[0].updated_at;
+    }
+    return null;
   },
 };
 

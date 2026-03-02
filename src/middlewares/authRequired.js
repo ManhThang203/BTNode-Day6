@@ -2,8 +2,8 @@ const jwt = require("jsonwebtoken");
 
 // Lấy cấu hình từ app.config
 const config = require("@/config/app.config");
-const accessSecret = config.jwt.accessSecret;
-const jwtAlgorithm = config.jwt.algorithm;
+const accessSecret = config.JWT.accessSecret;
+const jwtAlgorithm = config.JWT.algorithm;
 
 /**
  * Middleware xác thực JWT token

@@ -20,8 +20,14 @@ const { apiRateLimiter } = require("@/middlewares/rateLimiter");
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// CORS configuration
+const corsOptions = {
+  origin: ["http://localhost:5173", "https://manththang203.github.io"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(response);
@@ -45,7 +51,7 @@ app.use(errorHandler);
 app.use(notFound);
 
 // Database connection and server start
-const PORT = config.server.port;
+const PORT = config.SERVER.port;
 
 async function startServer() {
   try {

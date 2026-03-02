@@ -11,6 +11,16 @@ router.post("/register", authController.register);
 // POST /api/auth/login
 router.post("/login", authController.login);
 
+// POST /api/auth/verify-email
+router.post("/verify-email", authController.verifyEmail);
+
+// POST /api/auth/resend-verify-email (yêu cầu đăng nhập)
+router.post(
+  "/resend-verify-email",
+  authRequired,
+  authController.resendVerifyEmail,
+);
+
 // POST /api/auth/refresh-token
 router.post("/refresh-token", authController.refreshToken);
 
@@ -20,5 +30,8 @@ router.post(
   authRequired, // Middleware kiểm tra token
   authController.logout,
 );
+
+// POST /api/auth/change-password (yêu cầu đăng nhập)
+router.post("/change-password", authRequired, authController.changePassword);
 
 module.exports = router;
