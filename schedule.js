@@ -15,8 +15,7 @@ const cleanupExpiredTokens = require("@/schedules/cleanupExpiredTokens");
 
 // Daily report: 2h sáng mỗi ngày
 
-// new CronJob("0 0 2 * * *", dailyReport, null, true);
-new CronJob("*/5 * * * * *", dailyReport, null, true);
+new CronJob("0 0 2 * * *", dailyReport, null, true);
 
 // Backup DB: 3h sáng mỗi ngày
 
