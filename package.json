@@ -7,7 +7,7 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "queue": "node src/queue.js",
-    "schedule": "node src/schedule.js",
+    "schedule": "node ./schedule.js",
     "test": "node src/test.js"
   },
   "dependencies": {

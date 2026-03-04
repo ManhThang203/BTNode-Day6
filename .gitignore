@@ -8,6 +8,8 @@ node_modules/
 backup
 credentials.json
 
+
+
 # Logs
 logs/
 *.log
