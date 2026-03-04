@@ -6,13 +6,17 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "queue": "node src/queue.js"
+    "queue": "node src/queue.js",
+    "schedule": "node src/schedule.js",
+    "test": "node src/test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "cron": "^4.4.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "googleapis": "^171.4.0",
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.3.4",
     "mysql2": "^3.17.0",

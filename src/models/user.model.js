@@ -25,6 +25,19 @@ const User = {
     await db.execute(sql);
   },
 
+  // Đếm số lượng user mới được tạo trong ngày hôm qua
+  async countNewUser() {
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    const prev = date.toISOString().slice(0, 10);
+
+    const [rows] = await db.execute(
+      "select count(*) as count from users where created_at between ? and ?;",
+      [`${prev} 00:00:00`, `${prev} 23:59:59`],
+    );
+    return rows[0].count;
+  },
+
   /**
    * Tìm user theo ID
    */

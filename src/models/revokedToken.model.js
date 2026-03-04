@@ -52,6 +52,18 @@ const RevokedToken = {
       throw error;
     }
   },
+
+  /**
+   * Xóa các token đã hết hạn
+   */
+  deleteExpired: async () => {
+    const sql = `
+      DELETE FROM revoked_tokens
+      WHERE expires_at < NOW()
+    `;
+    const [result] = await db.execute(sql);
+    return result.affectedRows;
+  },
 };
 
 module.exports = RevokedToken;

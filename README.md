@@ -61,6 +61,14 @@ A production-ready REST API for Todo Application built with Node.js, Express, an
 - **Automatic Retry** - Failed jobs can be reprocessed
 - **Email Notifications** - Verification emails and password change notifications
 
+### Scheduled Tasks (Cron Jobs)
+
+- **Automated Background Jobs** - Tasks run automatically on schedule
+- **Daily Report** - Send daily report of new user registrations at 2:00 AM
+- **Database Backup** - Automatic backup and upload to Google Drive at 3:00 AM
+- **Token Cleanup** - Remove expired tokens from blacklist at 1:00 AM
+- **Cron Expression Support** - Flexible scheduling using cron syntax
+
 ### API Design
 
 - **RESTful API** - Standard HTTP methods and status codes
@@ -71,19 +79,21 @@ A production-ready REST API for Todo Application built with Node.js, Express, an
 
 ## Tech Stack
 
-| Technology     | Purpose               | Version |
-| -------------- | --------------------- | ------- |
-| Node.js        | JavaScript runtime    | ^18.x   |
-| Express.js     | Web framework         | ^4.18.2 |
-| MySQL          | Database              | ^8.0    |
-| mysql2         | MySQL driver          | ^3.17.0 |
-| JSON Web Token | Authentication        | ^9.0.2  |
-| bcryptjs       | Password hashing      | ^2.4.3  |
-| dotenv         | Environment variables | ^16.3.1 |
-| cors           | CORS middleware       | ^2.8.5  |
-| nodemailer     | Email sending         | ^6.9.8  |
-| module-alias   | Path aliases          | ^2.2.3  |
-| nodemon        | Development tool      | ^3.0.2  |
+| Technology     | Purpose               | Version  |
+| -------------- | --------------------- | -------- |
+| Node.js        | JavaScript runtime    | ^18.x    |
+| Express.js     | Web framework         | ^4.18.2  |
+| MySQL          | Database              | ^8.0     |
+| mysql2         | MySQL driver          | ^3.17.0  |
+| JSON Web Token | Authentication        | ^9.0.2   |
+| bcryptjs       | Password hashing      | ^2.4.3   |
+| dotenv         | Environment variables | ^16.3.1  |
+| cors           | CORS middleware       | ^2.8.5   |
+| nodemailer     | Email sending         | ^6.9.8   |
+| module-alias   | Path aliases          | ^2.2.3   |
+| cron           | Scheduled tasks       | ^3.0.0   |
+| googleapis     | Google Drive API      | ^171.0.0 |
+| nodemon        | Development tool      | ^3.0.2   |
 
 ## Project Structure
 
@@ -271,6 +281,79 @@ The queue worker will:
 2. Process jobs asynchronously
 3. Update job status (pending → processing → completed/failed)
 4. Retry failed jobs automatically on next poll
+
+## Scheduled Tasks
+
+The application includes automated scheduled tasks using **node-cron** that run in the background:
+
+### Available Tasks
+
+| Task                       | Schedule      | Description                                                         |
+| -------------------------- | ------------- | ------------------------------------------------------------------- |
+| **Cleanup Expired Tokens** | 1:00 AM daily | Remove expired JWT tokens from the blacklist to keep database clean |
+| **Daily Report**           | 2:00 AM daily | Send daily report email with new user registrations count           |
+| **Database Backup**        | 3:00 AM daily | Backup MySQL database using mysqldump and upload to Google Drive    |
+
+### How It Works
+
+1. **Scheduler runs automatically** when the main application starts
+2. Uses `node-cron` library for cron-based scheduling
+3. Each task is independent and won't affect other tasks if one fails
+4. Logs are written to console for monitoring
+
+### Running the Scheduler
+
+The scheduler runs automatically when you start the server:
+
+```bash
+# Development mode
+npm run dev
+
+# Production mode
+npm start
+```
+
+All scheduled tasks will start automatically based on their cron expressions.
+
+### Task Details
+
+#### 1. Cleanup Expired Tokens
+
+- **File**: `src/schedules/cleanupExpiredTokens.js`
+- **Schedule**: `0 0 1 * * *` (1:00 AM daily)
+- **Function**: Deletes expired tokens from the `revoked_tokens` table
+- **Benefits**: Prevents database bloat from expired tokens
+
+#### 2. Daily Report
+
+- **File**: `src/schedules/dailyReport.js`
+- **Schedule**: `0 0 2 * * *` (2:00 AM daily)
+- **Function**: Count new users registered yesterday and send email report
+- **Email to**: dongthang848@gmail.com (configurable)
+
+#### 3. Database Backup
+
+- **File**: `src/schedules/backupDB.js`
+- **Schedule**: `0 0 3 * * *` (3:00 AM daily)
+- **Function**:
+  1. Create SQL dump using `mysqldump`
+  2. Save to `backup/` directory with format `{DB_NAME}-{YYYY-MM-DD}.sql`
+  3. Upload to Google Drive (replaces previous backup file)
+  4. Send notification email to admin
+- **Storage**: Local `backup/` folder + Google Drive
+
+### Customizing Schedules
+
+Edit `src/schedule.js` to modify cron schedules:
+
+```javascript
+// Default schedules
+new CronJob("0 0 2 * * *", dailyReport, null, true); // 2h daily
+new CronJob("0 0 3 * * *", backupDB, null, true); // 3h daily
+new CronJob("0 0 1 * * *", cleanupExpiredTokens, null, true); // 1h daily
+```
+
+Cron expression format: `second minute hour day-of-month month day-of-week`
 
 ## Environment Variables
 
